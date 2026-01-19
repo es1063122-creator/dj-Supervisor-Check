@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>관리감독자 일일점검</title>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css">
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif;
+  background:#f4f7ff;
+  color:#0b1b3b;
+}
+
+header{
+  background:linear-gradient(135deg,#003a7a,#004e91);
+  color:#fff;
+  padding:16px 20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+header h1{margin:0;font-size:18px}
+
+header button{
+  background:rgba(255,255,255,.15);
+  border:1px solid rgba(255,255,255,.4);
+  color:#fff;
+  border-radius:20px;
+  padding:6px 14px;
+  cursor:pointer;
+}
+
+main{max-width:900px;margin:0 auto;padding:20px}
+
+.card{
+  background:#fff;
+  border-radius:18px;
+  box-shadow:0 10px 30px rgba(0,64,128,.12);
+  padding:22px;
+  margin-bottom:20px;
+}
+
+h2{margin:0 0 16px;font-size:18px}
+
+/* 기본정보 */
+.input-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+label{
+  font-size:14px;
+  font-weight:800;
+}
+select,input{
+  width:100%;
+  padding:12px;
+  border-radius:10px;
+  border:2px solid #cdd9ff;
+  font-size:15px;
+}
+.date-picker{text-align:center;border-color:#003a7a}
+
+/* 점검항목 */
+.inspect-item{
+  border-bottom:1px solid #e6ecff;
+  padding:16px 0;
+}
+.inspect-title{
+  font-weight:900;
+  margin-bottom:6px;
+}
+.inspect-law{
+  font-size:13px;
+  color:#64748b;
+  margin-bottom:10px;
+}
+.inspect-buttons{
+  display:flex;
+  gap:10px;
+}
+.inspect-buttons button{
+  flex:1;
+  padding:12px 0;
+  border-radius:14px;
+  border:2px solid #cdd9ff;
+  background:#f8fbff;
+  font-weight:900;
+  cursor:pointer;
+  position:relative;
+  z-index:10;
+}
+
+.btn-good.active{background:#e6f7ee;border-color:#2ecc71;color:#1e824c}
+.btn-bad.active{background:#ffecec;border-color:#e74c3c;color:#b03024}
+.btn-na.active{background:#eef2f7;border-color:#94a3b8;color:#475569}
+
+.action-box{display:none;margin-top:10px}
+.action-box textarea{
+  width:100%;
+  min-height:70px;
+  padding:10px;
+  border-radius:10px;
+  border:1px solid #e74c3c;
+  background:#fff5f5;
+}
+
+/* 기타 */
+textarea.general{
+  width:100%;
+  min-height:90px;
+  padding:12px;
+  border-radius:10px;
+  border:1px solid #ccc;
+}
+
+/* 제출 버튼 */
+.submit-btn{
+  width:100%;
+  padding:20px;
+  background:linear-gradient(135deg,#003a7a,#0053a0);
+  color:#fff;
+  border:none;
+  border-radius:16px;
+  font-size:19px;
+  font-weight:900;
+  cursor:pointer;
+  position:relative;
+  z-index:20;
+}
+
+footer{
+  text-align:center;
+  font-size:13px;
+  color:#666;
+  padding:20px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>🏗 관리감독자 일일점검</h1>
+  <button onclick="location.href='index.html'">🏠 홈</button>
+</header>
+
+<main>
+
+<!-- ================= 점검 입력 ================= -->
+<div id="formSection">
+
+  <div class="card">
+    <h2>🧾 점검 기본정보</h2>
+    <div class="input-grid">
+      <div>
+        <label>📍 현장명</label>
+        <select id="siteName">
+          <option value="">선택</option>
+          <option>파주pmc</option>
+          <option>울산태화강</option>
+          <option>울산우정동</option>
+          <option>여수</option>
+          <option>강변역아이파크</option>
+          <option>김해사이언스파크</option>
+        </select>
+      </div>
+      <div>
+        <label>👷 점검자</label>
+        <input id="inspector" placeholder="이름 입력">
+      </div>
+      <div style="grid-column:1/3">
+        <label>📅 점검 날짜</label>
+        <input id="checkDate" class="date-picker">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📋 법정 점검항목</h2>
+    <div id="inspectList"></div>
+  </div>
+
+  <div class="card">
+    <h2>📝 기타 특이사항</h2>
+    <textarea id="generalNote" class="general"></textarea>
+  </div>
+
+  <button class="submit-btn" onclick="submitInspection()">✅ 점검 제출</button>
+</div>
+
+<!-- ================= 완료 화면 ================= -->
+<div id="completeSection" style="display:none;">
+  <div class="card" style="text-align:center;">
+    <h2>✅ 점검이 완료되었습니다</h2>
+    <p style="color:#555;margin-top:10px">
+      점검 결과가 정상적으로 저장되었으며<br>
+      본사 관리자 대시보드에 즉시 반영됩니다.
+    </p>
+    <div style="margin-top:30px">
+      <button class="submit-btn" onclick="location.href='index.html'">🏠 홈</button>
+      <button class="submit-btn" style="margin-top:12px;background:#1e40af"
+        onclick="location.href='dashboard.html'">📊 관리자 대시보드</button>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<footer>
+동진토건(주) 안전관리팀<br>
+© 2026 Dongjin Construction
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ko.js"></script>
+
+<script>
+flatpickr("#checkDate",{dateFormat:"Y-m-d",locale:"ko",defaultDate:new Date()});
+
+const items=[
+ ["1","제15조 1호","기계·기구·설비 안전보건점검"],
+ ["2","제15조 2호","작업복·보호구 점검 및 착용 교육지도"],
+ ["3","제15조 2호","방호장치 점검"],
+ ["4","제15조 3호","산업재해 발생 확인"],
+ ["5","제15조 4호","작업장 정리정돈"],
+ ["6","제15조 4호","통로 확보 상태"],
+ ["7","제15조 5호","안전·보건관리자 지도 협조"],
+ ["8","제15조 6호","위험성평가 참여"]
+];
+
+const list=document.getElementById("inspectList");
+
+items.forEach(([order,law,title])=>{
+  const div=document.createElement("div");
+  div.className="inspect-item";
+  div.dataset.order=order;
+  div.dataset.law=law;
+  div.dataset.title=title;
+  div.innerHTML=`
+    <div class="inspect-title">${order}. ${title}</div>
+    <div class="inspect-law">${law}</div>
+    <div class="inspect-buttons">
+      <button type="button" class="btn-good">양호</button>
+      <button type="button" class="btn-bad">미흡</button>
+      <button type="button" class="btn-na">해당없음</button>
+    </div>
+    <div class="action-box">
+      <textarea placeholder="미흡 시 조치내용 입력"></textarea>
+    </div>
+  `;
+  list.appendChild(div);
+
+  const buttons=div.querySelectorAll("button");
+  const actionBox=div.querySelector(".action-box");
+  const ta=actionBox.querySelector("textarea");
+
+  buttons.forEach(btn=>{
+    btn.onclick=()=>{
+      buttons.forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      if(btn.classList.contains("btn-bad")){
+        actionBox.style.display="block";
+        ta.focus();
+      }else{
+        actionBox.style.display="none";
+        ta.value="";
+      }
+    };
+  });
+});
+</script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc, serverTimestamp }
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig={
+  apiKey:"AIzaSyCngSCR-cxvRKmorbrfmjQd7c2CbEK1fJM",
+  authDomain:"dj-supervisor-check.firebaseapp.com",
+  projectId:"dj-supervisor-check",
+  storageBucket:"dj-supervisor-check.firebasestorage.app",
+  messagingSenderId:"252979849342",
+  appId:"1:252979849342:web:621b6212a3223f89bbd02f"
+};
+
+const app=initializeApp(firebaseConfig);
+const db=getFirestore(app);
+
+window.submitInspection=async()=>{
+  const site=document.getElementById("siteName").value;
+  const inspector=document.getElementById("inspector").value.trim();
+  if(!site||!inspector){alert("현장명과 점검자를 입력하세요.");return;}
+
+  const inspections=[];
+  let invalid=false;
+
+  document.querySelectorAll(".inspect-item").forEach(item=>{
+    const active=item.querySelector("button.active");
+    const action=item.querySelector(".action-box textarea").value.trim();
+    let result="";
+    if(active){
+      if(active.classList.contains("btn-good")) result="good";
+      else if(active.classList.contains("btn-bad")){
+        result="bad";
+        if(action==="") invalid=true;
+      }else result="na";
+    }
+    inspections.push({
+      order:item.dataset.order,
+      law:item.dataset.law,
+      title:item.dataset.title,
+      result,
+      action
+    });
+  });
+
+  if(invalid){
+    alert("미흡 항목의 조치내용을 모두 입력해야 합니다.");
+    return;
+  }
+
+  await addDoc(collection(db,"dailyInspections"),{
+    company:"동진토건(주)",
+    siteName:site,
+    inspector,
+    date:document.getElementById("checkDate").value,
+    inspections,
+    generalNote:document.getElementById("generalNote").value,
+    createdAt:serverTimestamp()
+  });
+
+  document.getElementById("formSection").style.display="none";
+  document.getElementById("completeSection").style.display="block";
+};
+</script>
+
+</body>
+</html>

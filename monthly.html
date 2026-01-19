@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>중대재해 대응 월간 리포트</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif;
+  background:#f4f7ff;
+  color:#0b1b3b;
+}
+header{
+  background:linear-gradient(135deg,#7c2d12,#9a3412);
+  color:#fff;
+  padding:18px 24px;
+}
+header h1{margin:0;font-size:22px}
+main{max-width:1200px;margin:0 auto;padding:24px}
+
+.card{
+  background:#fff;
+  border-radius:16px;
+  box-shadow:0 10px 30px rgba(0,64,128,.12);
+  padding:20px;
+  margin-bottom:20px;
+}
+
+select,button{
+  padding:10px 14px;
+  font-size:15px;
+  border-radius:8px;
+}
+button{
+  background:#9a3412;
+  color:#fff;
+  border:none;
+  cursor:pointer;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+  gap:20px;
+}
+
+.summary{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:14px;
+}
+.summary div{
+  background:#fef3c7;
+  border-radius:12px;
+  padding:16px;
+  text-align:center;
+  font-weight:800;
+}
+
+canvas{max-height:300px}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>🧾 중대재해 대응 월간 리포트</h1>
+</header>
+
+<main>
+
+<!-- 월 선택 -->
+<div class="card">
+  <label><strong>📅 리포트 대상 월 선택</strong></label><br><br>
+  <input type="month" id="month">
+  <button onclick="loadReport()">리포트 생성</button>
+  <button onclick="makePDF()">PDF 출력</button>
+</div>
+
+<!-- 요약 -->
+<div class="card">
+  <h2>📊 월간 점검 요약</h2>
+  <div class="summary" id="summaryBox"></div>
+</div>
+
+<!-- 현장별 -->
+<div class="grid">
+  <div class="card">
+    <h3>📍 현장별 미흡 건수</h3>
+    <canvas id="siteChart"></canvas>
+  </div>
+  <div class="card">
+    <h3>⚠ 주요 위험요인 TOP</h3>
+    <canvas id="riskChart"></canvas>
+  </div>
+</div>
+
+<!-- 조치 요약 -->
+<div class="card">
+  <h3>🛠 조치 이행 요약</h3>
+  <ul id="actionList"></ul>
+</div>
+
+<!-- 종합 평가 -->
+<div class="card">
+  <h3>📝 종합 평가</h3>
+  <p id="evaluation"></p>
+</div>
+
+</main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
+  getFirestore, collection, getDocs
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig={
+  apiKey:"AIzaSyCngSCR-cxvRKmorbrfmjQd7c2CbEK1fJM",
+  authDomain:"dj-supervisor-check.firebaseapp.com",
+  projectId:"dj-supervisor-check",
+  storageBucket:"dj-supervisor-check.firebasestorage.app",
+  messagingSenderId:"252979849342",
+  appId:"1:252979849342:web:621b6212a3223f89bbd02f"
+};
+
+const app=initializeApp(firebaseConfig);
+const db=getFirestore(app);
+
+let reportData={};
+
+window.loadReport=async()=>{
+  const month=document.getElementById("month").value;
+  if(!month){alert("월을 선택하세요");return;}
+
+  const snap=await getDocs(collection(db,"dailyInspections"));
+  const rows=snap.docs.map(d=>d.data())
+    .filter(d=>d.date?.startsWith(month));
+
+  const total=rows.length;
+  const sites=new Set();
+  let badCount=0;
+  const siteStat={}, riskStat={}, actions=[];
+
+  rows.forEach(r=>{
+    sites.add(r.siteName);
+    r.inspections.forEach(i=>{
+      if(i.result==="bad"){
+        badCount++;
+        siteStat[r.siteName]=(siteStat[r.siteName]||0)+1;
+        riskStat[i.title]=(riskStat[i.title]||0)+1;
+        actions.push(i.action);
+      }
+    });
+  });
+
+  reportData={month,rows,siteStat,riskStat,actions};
+
+  document.getElementById("summaryBox").innerHTML=`
+    <div>총 점검<br>${total}건</div>
+    <div>현장 수<br>${sites.size}</div>
+    <div>미흡 건수<br>${badCount}</div>
+    <div>미흡 비율<br>${total?Math.round(badCount/total*100):0}%</div>
+  `;
+
+  new Chart(siteChart,{
+    type:"bar",
+    data:{labels:Object.keys(siteStat),datasets:[{data:Object.values(siteStat)}]}
+  });
+
+  new Chart(riskChart,{
+    type:"bar",
+    data:{labels:Object.keys(riskStat),datasets:[{data:Object.values(riskStat)}]}
+  });
+
+  document.getElementById("actionList").innerHTML=
+    actions.slice(0,10).map(a=>`<li>${a}</li>`).join("");
+
+  document.getElementById("evaluation").innerText=
+    badCount
+    ? "당월 일부 현장에서 반복적인 위험요인이 확인되어 지속적인 관리·감독이 필요함."
+    : "당월 중대재해 위험요인은 확인되지 않았으며 관리 상태는 양호함.";
+};
+
+window.makePDF=()=>{
+  const { jsPDF }=window.jspdf;
+  const pdf=new jsPDF();
+  let y=20;
+
+  pdf.text("중대재해 대응 월간 리포트",20,y); y+=10;
+  pdf.text(`대상월: ${reportData.month}`,20,y); y+=10;
+
+  pdf.text("주요 요약",20,y); y+=8;
+  pdf.text(`- 총 점검: ${reportData.rows.length}건`,24,y); y+=6;
+  pdf.text(`- 미흡 건수: ${Object.values(reportData.siteStat).reduce((a,b)=>a+b,0)}`,24,y);
+
+  pdf.save(`중대재해_월간리포트_${reportData.month}.pdf`);
+};
+</script>
+
+</body>
+</html>

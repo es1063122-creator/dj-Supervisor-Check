@@ -1,227 +1,209 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>동진토건 관리감독자 일일점검</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>동진토건 관리감독자 일일점검</title>
 
-  <!-- Flatpickr -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css">
 
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif;
+  background:linear-gradient(135deg,#0a2a4f 0%,#003a7a 45%,#195cc8 100%);
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  color:#0b1b3b;
+}
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", sans-serif;
-      background: linear-gradient(135deg, #0a2a4f 0%, #003a7a 45%, #195cc8 100%);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-    }
+.container{
+  background:#fff;
+  border-radius:22px;
+  max-width:480px;
+  width:100%;
+  box-shadow:0 18px 60px rgba(0,0,0,.3);
+  overflow:hidden;
+  animation:slideUp .6s ease-out;
+}
 
-    .container {
-      background: #fff;
-      width: 100%;
-      max-width: 480px;
-      border-radius: 22px;
-      box-shadow: 0 18px 60px rgba(0,0,0,0.3);
-      overflow: hidden;
-    }
+@keyframes slideUp{
+  from{opacity:0;transform:translateY(25px)}
+  to{opacity:1;transform:translateY(0)}
+}
 
-    .header {
-      background: linear-gradient(135deg, #003a7a, #004e91);
-      color: #fff;
-      padding: 42px 30px;
-      text-align: center;
-      position: relative;
-    }
+.header{
+  background:linear-gradient(135deg,#003a7a,#004e91);
+  padding:44px 28px 38px;
+  text-align:center;
+  color:#fff;
+}
 
-    .home-btn {
-      position: absolute;
-      top: 15px;
-      right: 18px;
-      padding: 8px 16px;
-      border-radius: 20px;
-      border: 1px solid rgba(255,255,255,0.4);
-      background: rgba(255,255,255,0.15);
-      color: #fff;
-      cursor: pointer;
-    }
+.logo{
+  width:140px;
+  margin-bottom:16px;
+}
 
-    .logo {
-      width: 140px;
-      margin-bottom: 14px;
-    }
+.header h1{
+  font-size:24px;
+  margin:0 0 6px;
+  font-weight:800;
+}
+.header p{
+  font-size:14px;
+  opacity:.9;
+}
 
-    .content {
-      padding: 30px;
-    }
+.content{
+  padding:36px 28px;
+  text-align:center;
+}
 
-    .welcome {
-      text-align: center;
-      margin-bottom: 25px;
-    }
+.welcome h2{
+  font-size:20px;
+  margin-bottom:6px;
+}
+.welcome p{
+  font-size:14px;
+  color:#555;
+}
 
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3,1fr);
-      gap: 12px;
-      margin-bottom: 25px;
-    }
+.stats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+  margin:26px 0;
+}
+.stat-box{
+  background:#eef2ff;
+  border-radius:14px;
+  padding:16px 8px;
+}
+.stat-number{
+  font-size:18px;
+  font-weight:900;
+}
+.stat-label{
+  font-size:12px;
+  color:#555;
+}
 
-    .stat-box {
-      background: #eef1f5;
-      border-radius: 14px;
-      padding: 16px 10px;
-      text-align: center;
-      font-size: 14px;
-    }
+.notice{
+  background:#fff8e6;
+  border-left:4px solid #ff9800;
+  padding:14px;
+  border-radius:8px;
+  font-size:13px;
+  margin-bottom:26px;
+  text-align:left;
+}
 
-    .legal-notice {
-      background: #fff8e6;
-      border-left: 4px solid #ff9800;
-      padding: 14px;
-      border-radius: 8px;
-      font-size: 14px;
-      margin-bottom: 22px;
-    }
+.btn-primary{
+  width:100%;
+  padding:18px;
+  border-radius:14px;
+  background:#003a7a;
+  color:#fff;
+  border:none;
+  font-size:18px;
+  font-weight:900;
+  cursor:pointer;
+}
 
-    .date-box {
-      margin-bottom: 24px;
-    }
+.btn-secondary{
+  width:100%;
+  padding:16px;
+  border-radius:14px;
+  background:#fff;
+  color:#003a7a;
+  border:2px solid #003a7a;
+  font-size:15px;
+  font-weight:800;
+  margin-top:12px;
+  cursor:pointer;
+}
 
-    .date-picker {
-      width: 100%;
-      padding: 14px;
-      font-size: 16px;
-      border-radius: 12px;
-      border: 2px solid #003a7a;
-      text-align: center;
-    }
-
-    button {
-      width: 100%;
-      padding: 18px;
-      font-size: 18px;
-      font-weight: 700;
-      border-radius: 14px;
-      border: none;
-      cursor: pointer;
-    }
-
-    .btn-primary {
-      background: #003a7a;
-      color: #fff;
-    }
-
-    .footer {
-      text-align: center;
-      font-size: 13px;
-      color: #555;
-      padding: 18px;
-      border-top: 1px solid #eee;
-    }
-  </style>
+.footer{
+  text-align:center;
+  font-size:13px;
+  color:#666;
+  padding:20px;
+}
+</style>
 </head>
 
 <body>
+
 <div class="container">
 
   <div class="header">
-    <button class="home-btn" onclick="goHome()">🏠 홈</button>
-
-    <img src="https://raw.githubusercontent.com/es1063122-creator/djweb/main/djlogo.png"
-         class="logo" alt="동진토건 로고">
-
-    <h2>🏗 관리감독자 일일점검</h2>
-    <p>산업안전보건법 제16조 법정 의무</p>
+    <img
+      src="https://raw.githubusercontent.com/es1063122-creator/djweb/main/djlogo.png"
+      class="logo"
+      alt="동진토건 로고">
+    <h1>관리감독자 일일점검</h1>
+    <p>산업안전보건법 시행령 제15조</p>
   </div>
 
   <div class="content">
+
     <div class="welcome">
-      <h3>안녕하세요, 관리감독자님</h3>
-      <p>오늘도 안전한 현장을 만들어 주세요.</p>
+      <h2>안전한 현장은 점검에서 시작됩니다</h2>
+      <p>오늘의 현장 안전점검을 진행해주세요.</p>
     </div>
 
     <div class="stats">
-      <div class="stat-box">점검항목<br><strong>10개</strong></div>
-      <div class="stat-box">소요시간<br><strong>3분</strong></div>
-      <div class="stat-box">법정의무<br><strong>필수</strong></div>
+      <div class="stat-box">
+        <div class="stat-number">8</div>
+        <div class="stat-label">법정 점검항목</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-number">3분</div>
+        <div class="stat-label">소요 시간</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-number">의무</div>
+        <div class="stat-label">법정 점검</div>
+      </div>
     </div>
 
-    <div class="legal-notice">
-      관리감독자는 매일 작업 전 현장 점검을 실시하고 기록을 유지해야 합니다.
+    <div class="notice">
+      <strong>📢 법적 의무 안내</strong><br>
+      관리감독자는 매일 작업 전·중 현장 점검을 실시하고
+      점검 결과를 기록·보존해야 합니다.
     </div>
 
-    <div class="date-box">
-      <label><strong>📅 점검 날짜</strong></label>
-      <input type="text" id="checkDate" class="date-picker" placeholder="날짜 선택">
-    </div>
+    <!-- 🔥 핵심 버튼 -->
+    <button class="btn-primary" onclick="goToCheck()">
+      📝 점검하러 가기
+    </button>
 
-    <button class="btn-primary" onclick="submitInspection()">📝 점검 제출</button>
+    <button class="btn-secondary" onclick="goToDashboard()">
+      📊 본사 관리자 대시보드
+    </button>
+
   </div>
 
   <div class="footer">
     <strong>동진토건(주) 안전관리팀</strong><br>
+    <strong>KDH-safety</strong><br>
     © 2026 Dongjin Construction
   </div>
 
 </div>
 
-<!-- Flatpickr -->
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ko.js"></script>
-
 <script>
-  flatpickr("#checkDate", {
-    dateFormat: "Y-m-d",
-    locale: "ko",
-    defaultDate: new Date()
-  });
+function goToCheck(){
+  window.location.href = "check.html";
+}
 
-  function goHome() {
-    location.href = "https://es1063122-creator.github.io/dj-safty-portal/";
-  }
-</script>
-
-<!-- Firebase -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getFirestore, collection, addDoc, serverTimestamp }
-    from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyCngSCR-cxvRKmorbrfmjQd7c2CbEK1fJM",
-    authDomain: "dj-supervisor-check.firebaseapp.com",
-    projectId: "dj-supervisor-check",
-    storageBucket: "dj-supervisor-check.firebasestorage.app",
-    messagingSenderId: "252979849342",
-    appId: "1:252979849342:web:621b6212a3223f89bbd02f"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-
-  window.submitInspection = async function () {
-    const date = document.getElementById("checkDate").value;
-    if (!date) {
-      alert("점검 날짜를 선택하세요.");
-      return;
-    }
-
-    await addDoc(collection(db, "dailyInspections"), {
-      company: "동진토건(주)",
-      siteName: "파주 ○○현장",
-      inspector: "관리감독자",
-      date: date,
-      createdAt: serverTimestamp()
-    });
-
-    alert("✅ 점검이 정상적으로 저장되었습니다.");
-  };
+function goToDashboard(){
+  window.location.href = "dashboard.html";
+}
 </script>
 
 </body>

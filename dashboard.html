@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>본사 관리자 대시보드 | 동진토건</title>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif;
+  background:#f4f7ff;
+  color:#0b1b3b;
+}
+header{
+  background:linear-gradient(135deg,#1e3a8a,#1e40af);
+  color:#fff;
+  padding:18px 24px;
+}
+header h1{margin:0;font-size:20px}
+main{max-width:1300px;margin:0 auto;padding:24px}
+
+.card{
+  background:#fff;
+  border-radius:16px;
+  box-shadow:0 10px 30px rgba(0,64,128,.12);
+  padding:20px;
+  margin-bottom:20px;
+}
+
+table{width:100%;border-collapse:collapse}
+th,td{
+  padding:12px 10px;
+  border-bottom:1px solid #e6ecff;
+  font-size:14px;
+}
+th{background:#f1f5ff;font-weight:800}
+
+.bad{color:#b91c1c;font-weight:800}
+.good{color:#15803d;font-weight:700}
+
+button{
+  background:#2563eb;
+  color:#fff;
+  border:none;
+  padding:6px 12px;
+  border-radius:8px;
+  cursor:pointer;
+  font-size:13px;
+}
+
+.details{
+  display:none;
+  background:#f8fafc;
+  padding:12px;
+  border-left:4px solid #2563eb;
+}
+canvas{max-height:320px}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(380px,1fr));
+  gap:20px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>📊 본사 관리자 대시보드</h1>
+</header>
+
+<main>
+
+<!-- 점검 리스트 -->
+<div class="card">
+  <h2>📋 점검 현황</h2>
+  <table id="table">
+    <thead>
+      <tr>
+        <th>점검일</th>
+        <th>현장</th>
+        <th>점검자</th>
+        <th>미흡</th>
+        <th>PDF</th>
+        <th>상세</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<!-- 통계 -->
+<div class="grid">
+  <div class="card">
+    <h3>📍 현장별 미흡 건수</h3>
+    <canvas id="siteChart"></canvas>
+  </div>
+  <div class="card">
+    <h3>📅 월별 점검 건수</h3>
+    <canvas id="monthChart"></canvas>
+  </div>
+  <div class="card">
+    <h3>👷 점검자별 점검 횟수</h3>
+    <canvas id="inspectorChart"></canvas>
+  </div>
+</div>
+
+</main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
+  getFirestore, collection, getDocs, query, orderBy
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig={
+  apiKey:"AIzaSyCngSCR-cxvRKmorbrfmjQd7c2CbEK1fJM",
+  authDomain:"dj-supervisor-check.firebaseapp.com",
+  projectId:"dj-supervisor-check",
+  storageBucket:"dj-supervisor-check.firebasestorage.app",
+  messagingSenderId:"252979849342",
+  appId:"1:252979849342:web:621b6212a3223f89bbd02f"
+};
+
+const app=initializeApp(firebaseConfig);
+const db=getFirestore(app);
+
+const tbody=document.querySelector("#table tbody");
+
+const siteStat={}, monthStat={}, inspectorStat={};
+
+const q=query(collection(db,"dailyInspections"),orderBy("createdAt","desc"));
+const snap=await getDocs(q);
+
+snap.forEach((doc,i)=>{
+  const d=doc.data();
+  const bad=d.inspections.filter(x=>x.result==="bad");
+
+  siteStat[d.siteName]=(siteStat[d.siteName]||0)+bad.length;
+
+  const m=d.date?.slice(0,7);
+  if(m) monthStat[m]=(monthStat[m]||0)+1;
+
+  inspectorStat[d.inspector]=(inspectorStat[d.inspector]||0)+1;
+
+  const tr=document.createElement("tr");
+  tr.innerHTML=`
+    <td>${d.date}</td>
+    <td>${d.siteName}</td>
+    <td>${d.inspector}</td>
+    <td class="${bad.length?"bad":"good"}">${bad.length||"없음"}</td>
+    <td><button onclick="makePDF(${i})">PDF</button></td>
+    <td><button onclick="toggle('d${i}')">보기</button></td>
+  `;
+  tbody.appendChild(tr);
+
+  const detail=document.createElement("tr");
+  detail.innerHTML=`
+    <td colspan="6">
+      <div class="details" id="d${i}">
+        ${
+          bad.length
+          ? bad.map(b=>`<p><strong>${b.title}</strong><br>조치: ${b.action}</p>`).join("")
+          : "미흡 없음"
+        }
+        ${d.generalNote?`<hr><p><strong>기타 특이사항</strong><br>${d.generalNote}</p>`:""}
+      </div>
+    </td>
+  `;
+  tbody.appendChild(detail);
+
+  window.makePDF=idx=>{
+    const data=snap.docs[idx].data();
+    const { jsPDF }=window.jspdf;
+    const pdf=new jsPDF();
+    let y=20;
+
+    pdf.text("관리감독자 일일점검 결과",20,y); y+=10;
+    pdf.text(`현장: ${data.siteName}`,20,y); y+=8;
+    pdf.text(`점검자: ${data.inspector}`,20,y); y+=8;
+    pdf.text(`점검일: ${data.date}`,20,y); y+=12;
+
+    data.inspections.forEach(it=>{
+      pdf.text(`- ${it.title} : ${it.result}`,20,y); y+=6;
+      if(it.result==="bad"){
+        pdf.text(`  조치: ${it.action}`,24,y); y+=6;
+      }
+    });
+
+    if(data.generalNote){
+      y+=6;
+      pdf.text("기타 특이사항:",20,y); y+=6;
+      pdf.text(data.generalNote,20,y);
+    }
+
+    pdf.save(`${data.siteName}_${data.date}.pdf`);
+  };
+});
+
+window.toggle=id=>{
+  const el=document.getElementById(id);
+  el.style.display=el.style.display==="block"?"none":"block";
+};
+
+/* 차트 */
+new Chart(siteChart,{
+  type:"bar",
+  data:{labels:Object.keys(siteStat),datasets:[{data:Object.values(siteStat)}]}
+});
+new Chart(monthChart,{
+  type:"line",
+  data:{labels:Object.keys(monthStat),datasets:[{data:Object.values(monthStat)}]}
+});
+new Chart(inspectorChart,{
+  type:"bar",
+  data:{labels:Object.keys(inspectorStat),datasets:[{data:Object.values(inspectorStat)}]}
+});
+</script>
+
+</body>
+</html>

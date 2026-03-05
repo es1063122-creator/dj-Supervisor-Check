@@ -33,16 +33,18 @@ font-size:20px;
 main{
 max-width:1300px;
 margin:0 auto;
-padding:24px;
+padding:20px;
 }
 
 .card{
 background:#fff;
 border-radius:16px;
 box-shadow:0 10px 30px rgba(0,64,128,.12);
-padding:20px;
-margin-bottom:20px;
+padding:18px;
+margin-bottom:18px;
 }
+
+/* ================= 테이블 ================= */
 
 table{
 width:100%;
@@ -60,15 +62,10 @@ background:#f1f5ff;
 font-weight:800;
 }
 
-.bad{
-color:#b91c1c;
-font-weight:800;
-}
+.bad{color:#b91c1c;font-weight:800}
+.good{color:#15803d;font-weight:700}
 
-.good{
-color:#15803d;
-font-weight:700;
-}
+/* ================= 버튼 ================= */
 
 button{
 background:#2563eb;
@@ -84,32 +81,64 @@ button:hover{
 background:#1e40af;
 }
 
+/* ================= 상세 ================= */
+
 .details{
 display:none;
 background:#f8fafc;
-padding:12px;
+padding:14px;
 border-left:4px solid #2563eb;
-width:100%;
 }
 
+.photo-grid{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
+gap:10px;
+margin-top:10px;
+}
+
+.photo-grid img{
+width:100%;
+border-radius:8px;
+cursor:pointer;
+}
+
+/* ================= 그래프 ================= */
+
 canvas{
-max-height:320px;
+max-height:300px;
 }
 
 .grid{
 display:grid;
-grid-template-columns:repeat(auto-fit,minmax(380px,1fr));
-gap:20px;
+grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+gap:18px;
 }
+
+/* ================= 모바일 ================= */
 
 @media(max-width:768px){
 
-table{
-font-size:13px;
+table thead{
+display:none;
 }
 
-th,td{
-padding:8px;
+table,tbody,tr,td{
+display:block;
+width:100%;
+}
+
+tr{
+margin-bottom:12px;
+background:#fff;
+border-radius:12px;
+box-shadow:0 4px 14px rgba(0,0,0,.08);
+padding:10px;
+}
+
+td{
+border:none;
+padding:6px 0;
 }
 
 }
@@ -126,6 +155,7 @@ padding:8px;
 <main>
 
 <div class="card">
+
 <h2>📋 점검 현황</h2>
 
 <table id="table">
@@ -144,6 +174,7 @@ padding:8px;
 <tbody></tbody>
 
 </table>
+
 </div>
 
 <div class="grid">
@@ -186,34 +217,34 @@ const db=firebase.firestore();
 
 const tbody=document.querySelector("#table tbody");
 
-const siteStat={};
-const monthStat={};
-const inspectorStat={};
+const siteStat={}
+const monthStat={}
+const inspectorStat={}
 
-let allDocs=[];
+let allDocs=[]
 
 async function loadData(){
 
 const snap=await db.collection("dailyInspections")
 .orderBy("createdAt","desc")
-.get();
+.get()
 
-allDocs=snap.docs;
+allDocs=snap.docs
 
 snap.docs.forEach((doc,i)=>{
 
-const d=doc.data();
+const d=doc.data()
 
-const bad=d.inspections.filter(x=>x.result==="bad");
+const bad=d.inspections.filter(x=>x.result==="bad")
 
-siteStat[d.siteName]=(siteStat[d.siteName]||0)+bad.length;
+siteStat[d.siteName]=(siteStat[d.siteName]||0)+bad.length
 
-const m=d.date?.slice(0,7);
-if(m) monthStat[m]=(monthStat[m]||0)+1;
+const m=d.date?.slice(0,7)
+if(m) monthStat[m]=(monthStat[m]||0)+1
 
-inspectorStat[d.inspector]=(inspectorStat[d.inspector]||0)+1;
+inspectorStat[d.inspector]=(inspectorStat[d.inspector]||0)+1
 
-const tr=document.createElement("tr");
+const tr=document.createElement("tr")
 
 tr.innerHTML=`
 <td>${d.date}</td>
@@ -222,14 +253,19 @@ tr.innerHTML=`
 <td class="${bad.length?"bad":"good"}">${bad.length||"없음"}</td>
 <td><button onclick="makePDF(${i})">PDF</button></td>
 <td><button onclick="toggleRow(this)">보기</button></td>
-`;
+`
 
-tbody.appendChild(tr);
+tbody.appendChild(tr)
 
-const detail=document.createElement("tr");
+const photosHTML=(d.photos||[])
+.map(p=>`<img src="${p}" onclick="window.open('${p}')">`)
+.join("")
+
+const detail=document.createElement("tr")
 
 detail.innerHTML=`
 <td colspan="6">
+
 <div class="details">
 
 ${
@@ -240,99 +276,83 @@ bad.length
 
 ${d.generalNote?`<hr><p><strong>기타 특이사항</strong><br>${d.generalNote}</p>`:""}
 
+${photosHTML?`
+
+<hr>
+<strong>📷 점검 사진</strong>
+
+<div class="photo-grid">
+${photosHTML}
 </div>
+
+`:""}
+
+</div>
+
 </td>
-`;
+`
 
-tbody.appendChild(detail);
+tbody.appendChild(detail)
 
-});
+})
 
-drawCharts();
+drawCharts()
 
 }
 
 function toggleRow(btn){
 
-const tr=btn.closest("tr");
-const next=tr.nextElementSibling;
-const detail=next.querySelector(".details");
+const tr=btn.closest("tr")
+const next=tr.nextElementSibling
+const detail=next.querySelector(".details")
 
-if(detail.style.display==="block"){
-detail.style.display="none";
-}else{
-detail.style.display="block";
-}
+detail.style.display=detail.style.display==="block"?"none":"block"
 
 }
 
 function drawCharts(){
 
-new Chart(document.getElementById("siteChart"),{
-
+new Chart(siteChart,{
 type:"bar",
-
 data:{
 labels:Object.keys(siteStat),
 datasets:[{
-label:"미흡 건수",
 data:Object.values(siteStat),
 backgroundColor:"#ef4444"
 }]
 },
+options:{plugins:{legend:{display:false}}}
+})
 
-options:{
-responsive:true,
-plugins:{legend:{display:false}}
-}
-
-});
-
-new Chart(document.getElementById("monthChart"),{
-
+new Chart(monthChart,{
 type:"line",
-
 data:{
 labels:Object.keys(monthStat),
 datasets:[{
-label:"점검 건수",
 data:Object.values(monthStat),
 borderColor:"#3b82f6",
 fill:false
 }]
-},
-
-options:{
-responsive:true
 }
+})
 
-});
-
-new Chart(document.getElementById("inspectorChart"),{
-
+new Chart(inspectorChart,{
 type:"bar",
-
 data:{
 labels:Object.keys(inspectorStat),
 datasets:[{
-label:"점검 횟수",
 data:Object.values(inspectorStat),
 backgroundColor:"#22c55e"
 }]
 },
-
-options:{
-responsive:true,
-plugins:{legend:{display:false}}
-}
-
-});
+options:{plugins:{legend:{display:false}}}
+})
 
 }
 
 window.makePDF=idx=>{
 
-const data=allDocs[idx].data();
+const data=allDocs[idx].data()
 
 const rows=data.inspections.map(it=>`
 
@@ -356,7 +376,11 @@ ${it.result==="bad"?it.action:""}
 
 </tr>
 
-`).join("");
+`).join("")
+
+const photos=(data.photos||[])
+.map(p=>`<img src="${p}" style="width:150px;margin:5px">`)
+.join("")
 
 const html=`
 
@@ -380,26 +404,34 @@ ${rows}
 
 </table>
 
+${photos?`
+
+<h3 style="margin-top:30px">점검 사진</h3>
+
+${photos}
+
+`:""}
+
 </div>
-`;
+`
 
-const container=document.createElement("div");
-container.innerHTML=html;
+const container=document.createElement("div")
+container.innerHTML=html
 
-document.body.appendChild(container);
+document.body.appendChild(container)
 
 html2pdf().set({
 margin:10,
 filename:`${data.siteName}_${data.date}.pdf`,
 html2canvas:{scale:2},
-jsPDF:{unit:"mm",format:"a4",orientation:"portrait"}
+jsPDF:{unit:"mm",format:"a4"}
 }).from(container).save().then(()=>{
-document.body.removeChild(container);
-});
+document.body.removeChild(container)
+})
 
-};
+}
 
-loadData();
+loadData()
 
 </script>
 
